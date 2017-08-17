@@ -24,12 +24,10 @@ CREATE TABLE Comics (
 )
 ''')
 
+# Setting initial values for the website
 staticurl = 'http://www.comichron.com/monthlycomicssales/'
 year = 1996
 month = 9
-
-#year = 2002
-#month = 8
 
 while year < 2017:
     while month < 13:
@@ -38,6 +36,7 @@ while year < 2017:
 
         except_cont = 0
 
+        # Setting up URL to next month
         month_text = str(month)
         if month < 10:
             month_text = "0" + str(month)
@@ -46,8 +45,7 @@ while year < 2017:
         else:
             url = staticurl + "/" + str(year) + "/" + str(year) + "-" + month_text + ".html"
 
-#        print(url)
-
+        # Opening new month URL
         with urllib.request.urlopen(url) as response:
             html = response.read()
 
@@ -78,6 +76,8 @@ while year < 2017:
         counter = counter + 1
         item = str(tags[counter])
         issue_tag = re.findall("([x][l][0-9]+)", item)
+        
+        # Hardcoded workarounds to one-off formatting on site
         if month == 11 and year == 1996 :
             issue_tag = "xl70"
             counter = counter - 1
@@ -105,12 +105,9 @@ while year < 2017:
 
         for tag in tags:
             item = str(tag)
-#            print(item)
             item = re.sub("\n"," ",item)
-#            print(item)
 
             temp_class_tag = re.findall("([x][l][0-9]+)", item)
-#            if temp_class_tag == index_tag :
             if temp_class_tag == index_tag :
                 index_tmp = re.findall(">(.+)<", item)
 #                print(index_tmp)
@@ -138,23 +135,15 @@ while year < 2017:
                             except_cont = except_cont + 1
                         else:
                             break
-#                if index_load_tacker > index_load :
-#                if index_load is None : 
-#                    break
-#                else :
-#                    index_load_tracker = index_load
             elif temp_class_tag == title_tag :
                 title_tmp = re.findall(">(.+)<", item)
                 try:
                     title_load = title_tmp[0]
-#                    print(title_load)
                     title_load = re.sub("<span(.+);\S>","",title_load)
                     title_load = re.sub("</span>","",title_load)
                     title_load = re.sub("&amp;","&",title_load)
                     next = 1
                 except: 
-#                    print(item)
-#                    print(index_load)
                     continue
             elif temp_class_tag == issue_tag or next == 1:
                 issue_tmp = re.findall(">(.+)<", item)
@@ -185,6 +174,7 @@ while year < 2017:
                 except:
                     continue
 
+                # Inserting records into database table
                 try:
                     cur.execute('''INSERT INTO Comics
                     (sales_index, comic_name, issue_num, price, publisher, sales_volume, month, year) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )''', 
@@ -193,11 +183,11 @@ while year < 2017:
                     records = records + 1
                 except: continue
 
-#                conn.commit()
-
             else:
                 continue
         conn.commit()
+
+        # Printing # of records -- this could be commented out, but I found it useful for debugging / finding one-off formatting issues
         print("Done with month:", month, "year:", year)
         print("Updated:", records, "records")
         month = month + 1
